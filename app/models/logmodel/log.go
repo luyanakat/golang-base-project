@@ -1,4 +1,4 @@
-package model_log
+package logmodel
 
 type MiddlewareLogRequest struct {
 	RequestID   string `json:"request_id"`
