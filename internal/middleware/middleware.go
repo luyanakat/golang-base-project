@@ -5,7 +5,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
-	model_log "github.com/luyanakat/golang-base-project/app/models/log"
+	model_log "github.com/luyanakat/golang-base-project/app/models/logmodel"
 	"go.uber.org/zap"
 )
 

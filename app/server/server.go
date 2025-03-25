@@ -6,16 +6,15 @@ import (
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
-	"github.com/luyanakat/golang-base-project/app/routes"
+	"github.com/luyanakat/golang-base-project/app/handlers"
+	"github.com/luyanakat/golang-base-project/app/repository"
+	"github.com/luyanakat/golang-base-project/app/service"
 	"github.com/luyanakat/golang-base-project/internal/middleware"
+	"github.com/luyanakat/golang-base-project/pkg/db"
 	"go.uber.org/zap"
 )
 
-type HttpServer struct {
-	*gin.Engine
-}
-
-func NewHttpServer(logger *zap.SugaredLogger) *HttpServer {
+func NewHttpServer(logger *zap.SugaredLogger) *gin.Engine {
 	r := gin.New()
 	gin.SetMode(os.Getenv("GIN_MODE"))
 
@@ -32,9 +31,28 @@ func NewHttpServer(logger *zap.SugaredLogger) *HttpServer {
 		middleware.RequestTraceMiddleware,
 	)
 
+	baseRepo := InitRepository(logger)
+	baseService := service.NewBaseService(baseRepo, logger)
+	baseHandlers := handlers.NewBaseHandlers(baseService)
 	rootRoute := r.Group("/api/v1")
-	routes.PingRoute(rootRoute)
+
+	Routes(rootRoute, baseHandlers)
 
 	logger.Infof("HTTP server is running on port %s", os.Getenv("PORT"))
-	return &HttpServer{r}
+	return r
+}
+
+func Routes(r *gin.RouterGroup, baseHandlers *handlers.BaseHandlers) {
+	r.GET("/ping", baseHandlers.PingHandler.Ping)
+}
+
+func InitRepository(logger *zap.SugaredLogger) *repository.BaseRepository {
+	sqlConn, err := db.NewConnection()
+	if err != nil {
+		logger.Fatalf("Failed to connect to database: %v", err)
+	}
+	logger.Info("Database connection established")
+
+	baseRepo := repository.NewBaseRepository(sqlConn)
+	return baseRepo
 }
